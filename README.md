@@ -5,7 +5,7 @@
 [![Build Status](https://github.com/cleggtom/MiCRM.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/cleggtom/MiCRM.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/cleggtom/MiCRM.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/cleggtom/MiCRM.jl)
 
-## *Simulation of Microbial ecosystems in julia.*
+## *Simulation toolbox for microbial communities (AKA microbiomes) in julia.*
 
 This package contains code for the "Digital Microbiome". 
 
