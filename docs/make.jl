@@ -2,23 +2,20 @@ push!(LOAD_PATH,"../src/")
 
 # using MiCRM
 using Documenter
-using MiCRM
-using MiCRM.Parameters
-using MiCRM.Analysis
+using DigiMic
+using DigiMic.Parameters
+using DigiMic.Analysis
 
-DocMeta.setdocmeta!(MiCRM, :DocTestSetup, :(using MiCRM); recursive=true)
-
-
-# DocMeta.setdocmeta!(MiCRM, :DocTestSetup, :(using MiCRM); recursive=true)
+DocMeta.setdocmeta!(DigiMic, :DocTestSetup, :(using DigiMic); recursive=true)
 
 makedocs(;
-    modules=[MiCRM],
+    modules=[DigiMic],
     authors="Tom <t.clegg17@imperial.ac.uk> and contributors",
-    repo="https://github.com/cleggtom/MiCRM.jl/blob/{commit}{path}#{line}",
-    sitename="MiCRM.jl",
+    repo="https://github.com/EcoEngLab/DigiMic/blob/{commit}{path}#{line}",
+    sitename="DigiMic",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://cleggtom.github.io/MiCRM.jl",
+        canonical="https://github.com/EcoEngLab/DigiMic",
         assets=String[],
     ),
     pages=[
@@ -36,5 +33,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/CleggTom/MiCRM.jl.git"
+    repo="git@github.com:EcoEngLab/DigiMic.git"
 )
