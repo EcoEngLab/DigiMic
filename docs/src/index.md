@@ -1,15 +1,14 @@
 ```@meta
-CurrentModule = MiCRM
+CurrentModule = DigiMic
 ```
 
-# MiCRM.jl
+# DigiMic.jl
 
-*Simulation of Microbial Consumer Resource (MiCRM) systems in julia.*
+*Simulation of Microbiomes in julia.*
 
 ## Package Features
-* Random generation of random MiCRM systems
-* Streamlined interface for MiCRM simulations
-* Community coalescence 
+* Generation of random or structured microbial communities
+* Streamlined interface for numerical simulations
 
 
 ## Contents
@@ -17,7 +16,7 @@ CurrentModule = MiCRM
 Depth = 1
 ```
 
-Documentation for [MiCRM](https://github.com/cleggtom/MiCRM.jl).
+Documentation for [DigiMic](https://github.com/EcoEngLab/DigiMic).
 
 ```@index
 ```
