@@ -1,11 +1,14 @@
-# MiCRM.jl
+# DigiMic.jl
 
 [![CI](https://github.com/DigiMicOrg/DigiMic/actions/workflows/CI.yml/badge.svg)](https://github.com/DigiMicOrg/DigiMic/actions/workflows/CI.yml)
 
-MiCRM.jl is an early-stage Julia package for constructing and simulating
+DigiMic.jl is an early-stage Julia package for constructing and simulating
 microbial consumer-resource models. It includes random and modular parameter
 generation, an in-place SciML derivative, local stability metrics, and
 experimental stressor utilities.
+
+The package currently retains the `MiCRM` module name and UUID for compatibility
+with existing Julia consumers.
 
 ## Installation
 
