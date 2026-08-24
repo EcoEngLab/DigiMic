@@ -1,13 +1,25 @@
 using MiCRM
+using LinearAlgebra
+using Random
 using Test
 
+include("parameters.jl")
+include("simulations.jl")
+include("analysis.jl")
+include("stressors.jl")
 
-@test 1 == 1
-# @time begin
-#     using MiCRM
-#     p = MiCRM.Parameters.generate_params(10,10,λ = 0.3)
-#     u0 = ones(20)
-#     t_span = (0.0, 100000.0)
-#     prob = ODEProblem(MiCRM.Simulations.dx!, u0, t_span, p)
-#     sol = solve(prob, AutoTsit5(Rosenbrock23()))
-# end
+@testset "Local stability" begin
+	stable_jacobian = [-2.0 0.0; 0.0 -1.0]
+	unstable_jacobian = [-2.0 0.0; 0.0 0.5]
+	stable_spiral = [-0.5 -1.0; 1.0 -0.5]
+	unstable_spiral = [0.5 -1.0; 1.0 0.5]
+
+	@test MiCRM.Analysis.get_stability(stable_jacobian)
+	@test !MiCRM.Analysis.get_stability(unstable_jacobian)
+	@test MiCRM.Analysis.get_stability(stable_spiral)
+	@test !MiCRM.Analysis.get_stability(unstable_spiral)
+	@test MiCRM.Analysis.get_return_rate(stable_jacobian) ≈ -1.0
+	@test MiCRM.Analysis.get_return_rate(unstable_jacobian) ≈ 0.5
+	@test MiCRM.Analysis.get_return_rate(stable_spiral) ≈ -0.5
+	@test MiCRM.Analysis.get_return_rate(unstable_spiral) ≈ 0.5
+end

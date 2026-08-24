@@ -5,10 +5,8 @@
 Growth function for the stressor model. Identical to the standard MiCRM but includes an additional mortality term `C_i * S * γ_i` reflecting the negaitve effects of the stressor S. 
 """
 function growth_MiCRM_stressor!(dx,x,p,t,i)
-    dx[i] += -x[i] * p.m[i] - (x[i] * x[p.kw.S_ind] * p.kw.γ[i])
-    for α = 1:p.M
-        dx[i] += x[i] * x[α + p.N] * p.u[i,α] * (1 - p.λ) #uptake
-    end
+    growth_MiCRM!(dx,x,p,t,i)
+    dx[i] -= x[i] * x[p.kw.S_ind] * p.kw.γ[i]
 end
 
 """
@@ -28,7 +26,7 @@ end
 Calculates a vector of resource sensitvties given a parameter set and the extant consumers
 """
 function dRdS(p,C_extant)   
-    return(pinv(p.u[C_extant,:] * diagm((ones(p.M) - p.l * ones(p.M)))) * p.γ[C_extant])
+    return(pinv(p.u[C_extant,:] * diagm((ones(p.M) - p.l * ones(p.M)))) * p.kw.γ[C_extant])
 end
 
 """
@@ -46,16 +44,13 @@ function dCdS(p, C_extant, R, C, dR)
 end
 
 """
-    calc_sensitvtiy(sol)
+    calc_sensitivity(sol)
 
-Calculates the sensitvtiy of the whole system. Takes a single solution object for a simulation that has already reached equilibirum. 
+Calculate the sensitivity of consumers and resources to the stressor.
 """
-function calc_sensitvtiy(sol)
-    #get final deriv + assert equilibrium
-    print(minimum( sol(sol.t[end],Val{1})) )
-    
-    #get end masses
-    C,R = sol[end][1:sol.prob.p.N], sol[end][sol.prob.p.N + 1  : end - 1]
+function calc_sensitivity(sol)
+    state = sol.u[end]
+    C,R = state[1:sol.prob.p.N], state[sol.prob.p.N + 1:end - 1]
     
     C_extant = findall(C .> eps())
     
@@ -65,15 +60,18 @@ function calc_sensitvtiy(sol)
     return(vcat(dC[:],dR[:]))
 end
 
+calc_sensitvtiy(sol) = calc_sensitivity(sol)
+
 """
     remove_extinct(sol)
 removes extinct consumers from a solution object
 """
 function remove_extinct(sol)
     p = sol.prob.p
+    state = sol.u[end]
     
-    to_keep = findall(sol[end][1:p.N]  .> eps())
-    to_rm = findall(sol[end][1:p.N]  .< eps())
+    to_keep = findall(state[1:p.N] .> eps())
+    to_rm = findall(state[1:p.N] .< eps())
     
     p_dict = Dict(zip(keys(p),values(p)))
 
@@ -91,9 +89,8 @@ function remove_extinct(sol)
 
     p_new = NamedTuple(p_dict)
     
-    u0 = deepcopy(sol(sol.t[end]))
+    u0 = copy(state)
     deleteat!(u0, to_rm)
-        
-    #simulate
-    return(sol.prob.f, u0, (0.0,1e6), p_new)
+
+    return(DiffEqBase.remake(sol.prob; u0=u0, tspan=(0.0,1e6), p=p_new))
 end

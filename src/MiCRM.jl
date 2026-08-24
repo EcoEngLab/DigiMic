@@ -1,8 +1,5 @@
 module MiCRM
 
-    using Reexport
-    # # @reexport using ModelingToolkit
-    # @reexport using DiffEqBase, OrdinaryDiffEq
     using DiffEqBase
     using LinearAlgebra, Distributions
 

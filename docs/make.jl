@@ -1,37 +1,33 @@
-push!(LOAD_PATH,"../src/")
-
-# using MiCRM
 using Documenter
-using DigiMic
-using DigiMic.Parameters
-using DigiMic.Analysis
+using MiCRM
 
-DocMeta.setdocmeta!(DigiMic, :DocTestSetup, :(using DigiMic); recursive=true)
+DocMeta.setdocmeta!(MiCRM, :DocTestSetup, :(using MiCRM); recursive=true)
 
 makedocs(;
-    modules=[DigiMic],
+    modules=[MiCRM],
+    checkdocs=:none,
     authors="Tom <t.clegg17@imperial.ac.uk> and contributors",
-    repo="https://github.com/EcoEngLab/DigiMic/blob/{commit}{path}#{line}",
-    sitename="DigiMic",
+    repo="https://github.com/DigiMicOrg/DigiMic/blob/{commit}{path}#{line}",
+    sitename="MiCRM.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://github.com/EcoEngLab/DigiMic",
+        edit_link="main",
+        repolink="https://github.com/DigiMicOrg/DigiMic",
         assets=String[],
     ),
     pages=[
         "Home" => "index.md"
         "Manual" => ["Basic Usage" => "pages/overview.md",
                     "Parameters" => ["Overview" => "pages/parameters/parameters.md",
-                                    "Parameter generators" => "pages/parameters/community_generation.md",
-                                    "Coalescence"=>"pages/parameters/coalescence.md"],
+                                    "Parameter generators" => "pages/parameters/community_generation.md"],
                     "Simulations" => ["Overview" => "pages/simulations/simulations.md",
                                     "Custom Dynamics" => "pages/simulations/custom_dynamics.md"],
                     "Analysis" => ["Overview" => "pages/analysis/analysis.md",
-                                    "Effective Lottka Volterra" => "pages/analysis/GLV.md",
                                     "Local Stability Analysis" => "pages/analysis/local_stability.md"]
     ]],
 )
 
 deploydocs(;
-    repo="git@github.com:EcoEngLab/DigiMic.git"
+    repo="github.com/DigiMicOrg/DigiMic.git",
+    devbranch="main",
 )

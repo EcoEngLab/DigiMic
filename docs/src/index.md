@@ -1,22 +1,23 @@
+# MiCRM.jl
+
 ```@meta
-CurrentModule = DigiMic
+CurrentModule = MiCRM
 ```
 
-# DigiMic.jl
-
-*Simulation of Microbiomes in julia.*
+*Simulation of microbiomes in Julia.*
 
 ## Package Features
-* Generation of random or structured microbial communities
-* Streamlined interface for numerical simulations
 
+- Generation of random or structured microbial communities
+- Streamlined interface for numerical simulations
 
 ## Contents
+
 ```@contents
 Depth = 1
 ```
 
-Documentation for [DigiMic](https://github.com/EcoEngLab/DigiMic).
+Documentation for [MiCRM](https://github.com/DigiMicOrg/DigiMic).
 
 ```@index
 ```

@@ -1,44 +1,44 @@
-# DigiMic.jl
+# MiCRM.jl
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://cleggtom.github.io/MiCRM.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://cleggtom.github.io/MiCRM.jl/dev)
-[![Build Status](https://github.com/cleggtom/MiCRM.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/cleggtom/MiCRM.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/cleggtom/MiCRM.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/cleggtom/MiCRM.jl)
+[![CI](https://github.com/DigiMicOrg/DigiMic/actions/workflows/CI.yml/badge.svg)](https://github.com/DigiMicOrg/DigiMic/actions/workflows/CI.yml)
 
-## *Simulation toolbox for microbial communities (AKA microbiomes) in julia.*
-
-This package contains code for the "Digital Microbiome". 
-
-We use the [SciML](https://sciml.ai/documentation/) package for numerical simulations and sybolic representations of systems of ODEs.
+MiCRM.jl is an early-stage Julia package for constructing and simulating
+microbial consumer-resource models. It includes random and modular parameter
+generation, an in-place SciML derivative, local stability metrics, and
+experimental stressor utilities.
 
 ## Installation
-You can install the package directly from this repository through the julia package manager (see [here](https://pkgdocs.julialang.org) for more details). To do so start open the `julia` REPL and type `]` to enter the package manager:
+
+Install the package from this repository and add a SciML ODE solver:
 
 ```julia
-julia> ]
-(@v1.6) pkg> 
+pkg> add https://github.com/DigiMicOrg/DigiMic
+pkg> add OrdinaryDiffEq
 ```
 
-Activate the enviroment you want to install the package too with the `activate` command and then add the package with `add`:
+## Example
 
 ```julia
-(@v1.6) pkg> activate /path/to/my/project
-  Activating environment at `/path/to/my/project/Project.toml`
+using MiCRM
+using OrdinaryDiffEq
 
-(myproject) pkg> add https://github.com/EcoEngLab/DigiMic.jl
-     Cloning git-repo `https://github.com/EcoEngLab/DigiMic.jl`
-    Updating git-repo `https://github.com/CleggTom/MiCRM.jl`
-    Updating registry at `~/.julia/registries/General`
-   Resolving package versions...
-    Updating `~/Projects/Working/test/Project.toml`
-  [a39c0ef7] + MiCRM v0.0.1 `https://github.com/EcoEngLab/DigiMic.jl#main`
-    Updating `~/Projects/Working/test/Manifest.toml`
-  [a39c0ef7] + MiCRM v0.0.1 `https://github.com/EcoEngLab/DigiMic.jl#main`
+parameters = MiCRM.Parameters.generate_params(6, 4; λ=0.3)
+initial_state = ones(parameters.N + parameters.M)
+problem = ODEProblem(
+    MiCRM.Simulations.dx!,
+    initial_state,
+    (0.0, 10.0),
+    parameters,
+)
+solution = solve(problem, Tsit5())
 ```
 
-Once the package is installed, you can load it the `using` command in the julia prompt:
-```julia
-using DigiMic
+## Development
+
+```bash
+julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+julia --project=docs docs/make.jl
 ```
 
-For more details on how to use the package please see the [full documentation](https://cleggtom.github.io/MiCRM.jl/dev) (note that for now the dev docs will be most up to date as the package is under development)
+The package is not currently registered in Julia's General registry.
