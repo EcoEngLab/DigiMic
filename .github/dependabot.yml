@@ -1,13 +1,31 @@
 version: 2
 updates:
   - package-ecosystem: "julia"
-    directories:
-      - "/"
-      - "/docs"
-      - "/test"
+    directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "LinearAlgebra"
+  - package-ecosystem: "julia"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # MiCRM is the unregistered package under development, linked by path.
+      - dependency-name: "MiCRM"
+  - package-ecosystem: "julia"
+    directory: "/test"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "LinearAlgebra"
+      - dependency-name: "Random"
+      - dependency-name: "Test"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
