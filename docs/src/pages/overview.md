@@ -1,28 +1,34 @@
-# Basic Usage
+# Basic usage
 
 ## Introduction
 
-This page will guide you through simulating microbial consumer resource models (MiCRMs) including community parameter generation. In general simulation of microbial communities in `MiCRM.jl` are done in three steps:
+DigiMic.jl provides the `MiCRM` Julia module for simulating microbial
+consumer-resource models. A basic workflow has three steps:
 
-1. Generate community parameters
-2. Define system dynamics
-3. Simulate system
+1. Generate community parameters.
+2. Define the system dynamics.
+3. Integrate the system through time with a SciML solver.
 
-We will walk through the simulation of the basic MiCRM model given by the set of equations:
+The default dynamics implement
 
 ```math
 \begin{aligned}
-    \frac{dC_i}{dt} &= \sum_{\alpha = 0}^{M} C_i R_{\alpha} u_{i\alpha}  (1 - \lambda_{\alpha}) - C_i m_i \\
-    \frac{dR_\alpha}{dt} &= \rho_{\alpha} - R_{\alpha} \omega_{\alpha} - \sum_{i = 0}^{N} C_i R_{\alpha} u_{i\alpha} + \sum_{i = 0}^{N} \sum_{\beta = 0}^{M} C_i R_{\beta} u_{i \beta} l_{\beta \alpha}
+    \frac{dC_i}{dt} &= C_i \sum_{\alpha = 1}^{M} R_{\alpha} u_{i\alpha}
+        (1 - \lambda_{\alpha}) - C_i m_i, \\
+    \frac{dR_\alpha}{dt} &= \rho_{\alpha} - R_{\alpha} \omega_{\alpha}
+        - \sum_{i = 1}^{N} C_i R_{\alpha} u_{i\alpha}
+        + \sum_{i = 1}^{N} \sum_{\beta = 1}^{M}
+          C_i R_{\beta} u_{i\beta} l_{\beta\alpha},
 \end{aligned}
 ```
 
-with parameters:
+where ``\lambda_\alpha = \sum_{\beta=1}^{M} l_{\alpha\beta}`` is the
+total fraction of resource ``\alpha`` uptake that is leaked.
 
 | Parameter | Description | Key |
 | --- | --- | --- |
-| ``C_i`` | Biomass of consumer ``i`` | - |
-| ``R_{\alpha}`` | Mass of resource ``\alpha`` | - |
+| ``C_i`` | Biomass of consumer ``i`` | state entries `1:N` |
+| ``R_{\alpha}`` | Mass of resource ``\alpha`` | state entries `N+1:N+M` |
 | ``N`` | Number of consumer populations | `N` |
 | ``M`` | Number of resources | `M` |
 | ``u_{i \alpha}`` | Uptake rate of resource ``\alpha`` by consumer ``i`` | `u` |
@@ -30,70 +36,90 @@ with parameters:
 | ``\rho_{\alpha}`` | Inflow rate for resource ``\alpha`` | `ρ` |
 | ``\omega_{\alpha}`` | Outflow rate for resource ``\alpha`` | `ω` |
 | ``l_{\alpha \beta}`` | Fraction of resource ``\alpha`` uptake leaked as resource ``\beta`` | `l` |
-| ``\lambda_{\alpha}`` | Total leaked fraction ``\sum_{\beta} l_{\alpha,\beta}`` | `λ` |
+| ``\lambda_{\alpha}`` | Total leaked fraction ``\sum_{\beta} l_{\alpha\beta}`` | row sum of `l` |
 
-## Generating Community Parameters
+## Generating community parameters
 
-The first step of any simulation is to generate a set of parameters for a given microbial community. `MiCRM.jl` stores all parameters in `NamedTuples` which are immutable (cannot be altered once created) making them fast and (as the name would suggest) indexable by name. This makes them easy to use in the derivative function. In this example we will consider a simple unstructured community where uptake and leakage values are randomly drawn from a Dirichlet distribution and all other parameters are set to 1:
-
-```julia
-    using Distributions
-
-    #set system size and leakage
-    N,M,leakage = 10,10,0.3
-
-    #uptake
-    du = Distributions.Dirichlet(N,1.0)
-    u = copy(rand(du, M)')
-
-    #cost term
-    m = ones(N)
-
-    #inflow + outflow
-    ρ,ω = ones(M),ones(M)
-
-    #leakage
-    l = copy(rand(du,M)' .* leakage)
-
-    param = (N = N, M = M, u = u, m = m, ρ = ρ, ω = ω, l = l,
-             kw = (λ = leakage,))
-```
-
-In practice it is more convenient to use `generate_params`. By default it creates communities with random uptake and leakage matrices. See [Structured community generation](parameters/community_generation.md) for the included modular generators.
+`MiCRM` stores a parameter set in a `NamedTuple`. Its fields cannot be replaced,
+but array-valued fields such as `u` and `l` remain mutable. The following
+example constructs an unstructured parameter set directly. It uses different
+consumer and resource counts to make the matrix dimensions explicit.
 
 ```julia
-    using MiCRM
+N, M, leakage = 10, 8, 0.3
 
-    #set system size and leakage
-    N,M,leakage = 10,10,0.3
+# Each consumer has a normalised distribution over M resources.
+u = rand(N, M)
+u ./= sum(u; dims=2)
 
-    #generate community parameters
-    param = MiCRM.Parameters.generate_params(N, M; λ=leakage)
+m = ones(N)
+ρ = ones(M)
+ω = ones(M)
+
+# Each resource leaks a total fraction into M possible resources.
+l = rand(M, M)
+l .*= leakage ./ sum(l; dims=2)
+
+parameters = (
+    N=N,
+    M=M,
+    u=u,
+    m=m,
+    ρ=ρ,
+    ω=ω,
+    l=l,
+    kw=(λ=leakage,),
+)
 ```
 
-Custom parameter generators can be supplied through the `f_m`, `f_ρ`, `f_ω`, `f_u`, and `f_l` keyword arguments.
+In most cases, use [`MiCRM.Parameters.generate_params`](@ref) instead. Its
+default uptake rows sum to one and its default leakage rows sum to the required
+`λ` value.
 
-## Defining System Dynamics
+```julia
+using MiCRM
 
-Once we have a set of parameters the next step is to define the dynamics of the community we want to simulate. `MiCRM.jl` allows users to pass custom functions to `MiCRM.Simulations.dx!`; see [Custom dynamics](simulations/custom_dynamics.md). This example uses the default dynamics.
+N, M, leakage = 10, 8, 0.3
+parameters = MiCRM.Parameters.generate_params(N, M; λ=leakage)
+```
+
+Custom generators can be supplied through the `f_m`, `f_ρ`, `f_ω`, `f_u`, and
+`f_l` keyword arguments. See [Structured community generation](parameters/community_generation.md).
+
+## Defining system dynamics
+
+[`MiCRM.Simulations.dx!`](@ref) implements the default in-place derivative.
+Its component callbacks can be replaced without rewriting the full model; see
+[Custom dynamics](simulations/custom_dynamics.md).
 
 ## Simulation
 
-Once we have the parameters and the derivative equation we are ready to simulate the system and integrate through time. `MiCRM.jl` relies heavily on the brilliant `DifferentialEquations.jl` to do the numerical integration and it is worth having a look at the docs to get an idea of what is going on under the hood in your simulations. The simulation procedure is fairly straightforward and just requires that we first create an `ODEProblem` object which defines the problem for the ODE solver and then solve it with the aptly named `solve` function. `MiCRM.jl` imports a lightweight version of the `DifferentialEquations.jl` package to use so these functions are available when we run `using MiCRM`. To define the `ODEProblem` we need to specify the initial state of the system as well as the timespan we want to simulate over:
+`MiCRM` supplies the model derivative, while `OrdinaryDiffEq` supplies the
+`ODEProblem`, solver algorithms, and `solve` function.
 
 ```julia
-    using OrdinaryDiffEq
+using MiCRM
+using OrdinaryDiffEq
 
-    #inital state
-    x0 = ones(N+M)
-    #time span
-    tspan = (0.0, 10.0)
+initial_state = ones(parameters.N + parameters.M)
+timespan = (0.0, 10.0)
 
-    #define problem
-    prob = ODEProblem(MiCRM.Simulations.dx!, x0, tspan, param)
-    sol = solve(prob, Tsit5())
+problem = ODEProblem(
+    MiCRM.Simulations.dx!,
+    initial_state,
+    timespan,
+    parameters,
+)
+solution = solve(problem, Tsit5())
 ```
+
+The state vector contains all ``N`` consumers followed by all ``M`` resources.
+Choose solver tolerances, output times, and termination criteria according to
+the scientific question being studied.
 
 ## Analysis
 
-Once the simulation is done
+For an autonomous solution whose terminal state is an equilibrium,
+[`MiCRM.Analysis.get_jac`](@ref) calculates the local Jacobian. The analysis
+module can then test local stability and quantify perturbation responses; see
+[Local analysis](analysis/local_stability.md).
