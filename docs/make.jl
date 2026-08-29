@@ -8,7 +8,7 @@ makedocs(;
     checkdocs=:none,
     authors="Tom <t.clegg17@imperial.ac.uk> and contributors",
     repo="https://github.com/DigiMicOrg/DigiMic/blob/{commit}{path}#{line}",
-    sitename="MiCRM.jl",
+    sitename="DigiMic.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         edit_link="main",
@@ -30,4 +30,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/DigiMicOrg/DigiMic.git",
     devbranch="main",
+    versions=["dev" => "dev", "stable" => "v^", "v#.#"],
 )

@@ -1,14 +1,20 @@
 # DigiMic.jl
 
 [![CI](https://github.com/DigiMicOrg/DigiMic/actions/workflows/CI.yml/badge.svg)](https://github.com/DigiMicOrg/DigiMic/actions/workflows/CI.yml)
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://digimicorg.github.io/DigiMic/)
 
-DigiMic.jl is an early-stage Julia package for constructing and simulating
-microbial consumer-resource models. It includes random and modular parameter
-generation, an in-place SciML derivative, local stability metrics, and
-experimental stressor utilities.
+DigiMic.jl is the DigiMic platform's early-stage Julia repository for
+constructing and simulating microbial consumer-resource models. It includes
+random and modular parameter generation, an in-place SciML derivative, local
+stability metrics, and experimental stressor utilities.
 
-The package currently retains the `MiCRM` module name and UUID for compatibility
-with existing Julia consumers.
+The Julia package and root module are currently named `MiCRM`; install from this
+repository and import it with `using MiCRM`.
+
+See the [package documentation](https://digimicorg.github.io/DigiMic/) for
+the model equations, parameter conventions, simulation interface, and analysis
+utilities. For the wider package ecosystem and training materials, visit the
+[DigiMic platform](https://digimicorg.github.io/).
 
 ## Installation
 

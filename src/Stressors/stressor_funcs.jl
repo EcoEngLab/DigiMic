@@ -2,7 +2,8 @@
 """
     growth_MiCRM_stressor!(dx,x,p,t,i)
 
-Growth function for the stressor model. Identical to the standard MiCRM but includes an additional mortality term `C_i * S * γ_i` reflecting the negaitve effects of the stressor S. 
+Growth function for the stressor model. It subtracts the additional mortality
+loss `C_i * S * γ_i` from the standard MiCRM consumer dynamics.
 """
 function growth_MiCRM_stressor!(dx,x,p,t,i)
     growth_MiCRM!(dx,x,p,t,i)
@@ -12,18 +13,19 @@ end
 """
     stressor!(dx,x,p,t)
 
-Stressor dynamics follow a negative exponential, decaying at rate d.
+Implement `dS/dt = d * S`. The stressor decays when `d < 0`, is constant when
+`d = 0`, and grows when `d > 0`.
 """
 function stressor!(dx,x,p,t)
     dx[p.kw.S_ind] = p.kw.d * x[p.kw.S_ind]
 end
 
 #analysis
-#define functions to calculate sensitvtiy
+# Define functions to calculate sensitivity.
 """
     dRdS(p,C_extant)
 
-Calculates a vector of resource sensitvties given a parameter set and the extant consumers
+Calculate resource sensitivities for a parameter set and its extant consumers.
 """
 function dRdS(p,C_extant)   
     return(pinv(p.u[C_extant,:] * diagm((ones(p.M) - p.l * ones(p.M)))) * p.kw.γ[C_extant])
@@ -32,7 +34,7 @@ end
 """
     dCdS(p, C_extant, R, C, dR)
 
-    Calculates consumer sensitvtiy given parameters as well as the system equilibirum state. 
+Calculate consumer sensitivity from the parameters and equilibrium state.
 """
 function dCdS(p, C_extant, R, C, dR)
    leakage_factor = (p.l' - I(p.M))
@@ -46,7 +48,9 @@ end
 """
     calc_sensitivity(sol)
 
-Calculate the sensitivity of consumers and resources to the stressor.
+Calculate consumer and resource sensitivity to the stressor. The result lists
+extant consumers in their original index order followed by all resources;
+extinct consumers and the stressor state are omitted.
 """
 function calc_sensitivity(sol)
     state = sol.u[end]
@@ -64,7 +68,9 @@ calc_sensitvtiy(sol) = calc_sensitivity(sol)
 
 """
     remove_extinct(sol)
-removes extinct consumers from a solution object
+
+Return a remade problem with consumers below machine precision removed and its
+time span set to `(0.0, 1e6)`.
 """
 function remove_extinct(sol)
     p = sol.prob.p

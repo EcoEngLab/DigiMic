@@ -1,7 +1,11 @@
 """
     get_jac(sol)
 
-Numerically calculate jacobian of system from the solution object. Assumes that the system is at equilibrium so the end state is used. 
+For an autonomous ODE, calculate the system Jacobian at the solution's terminal
+state with automatic differentiation. The caller is responsible for ensuring
+that the terminal state is an equilibrium. The right-hand side is evaluated at
+`t = 1.0`, so this method does not represent the terminal-time Jacobian for an
+explicitly time-dependent system.
 """
 function get_jac(sol::T; thresh = eps()) where T <: DiffEqBase.AbstractODESolution
     #assert equilibrium
@@ -20,7 +24,8 @@ end
 """
     get_jac(sol::DiffEqBase.SteadyStateSolution)
 
-For steady-state solution types.
+Calculate the Jacobian at a steady-state solution. The right-hand side is
+evaluated at `t = 1.0`; use this method unchanged only for autonomous systems.
 """
 function get_jac(sol::DiffEqBase.SteadyStateSolution)
     function f(x)
@@ -38,7 +43,7 @@ end
 """
     get_stability(J)
 
-Determine the stability a system given its jaccobian by testing if the real part of the leading eigenvalue is positive. 
+Return `true` when every eigenvalue of the Jacobian has a negative real part.
 """
 function get_stability(J)
     maximum(real, eigvals(J)) < 0.0
@@ -54,9 +59,10 @@ function get_displacement(J, u, t, w = ones(size(J)[1]))
 end
 
 """
-    get_Rins(J, t, w = ones(size(J)[1]))
+    get_Rins(J, u, t, w = ones(size(J)[1]))
 
-Caclulate the instantaneous rate of growth of the perturbation u at time t. The observation vector `w` can be optionally supplied to consider linear combinations of the state variables. This can include any linear combination of state variables such as the mass of specific components of the system as well as total functioning measures. 
+Calculate the instantaneous rate of growth of perturbation `u` at time `t`.
+The optional observation weights `w` select or weight state variables.
 """
 function get_Rins(J, u, t, w = ones(size(J)[1]))
     # tr(J * exp(J * t) * u * w') / tr(exp(J * t) * u * w')
@@ -72,7 +78,8 @@ end
 """
     get_reactivity(J,u)
 
-Test wether the system is "reactive" to the perturbation `u`. A reactive is system is one where the initial perturbation is amplified so that the deviation from equilibrium initially increases 
+Return `true` when perturbation `u` is initially amplified away from the
+equilibrium.
 """
 function get_reactivity(J,u)
     get_Rins(J, u, 0.0) > 0.0
@@ -81,7 +88,8 @@ end
 """
     get_return_rate(J)
 
-get the rate of return of the system from perturbation. This value is determined by the leading eigenvalue regardless of the direction of the perturbation or the observation vector we choose. 
+Return the real part of the leading Jacobian eigenvalue. Negative values imply
+asymptotic return toward the equilibrium.
 """
 function get_return_rate(J)
     maximum(real, eigvals(J))

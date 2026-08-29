@@ -6,7 +6,11 @@ MiCRM.jl includes tools for automatically calculating the Jacobian matrix that d
 
 ## Calculating the Jacobian
 
-MiCRM.jl calculates the Jacobian of a system using ForwardDiff.jl. This automatic-differentiation back end computes derivatives of the ODE system at the terminal state through `Analysis.get_jac(sol)`.
+MiCRM.jl calculates the Jacobian of a system using ForwardDiff.jl. For an
+autonomous ODE, `Analysis.get_jac(sol)` differentiates the system at the
+terminal state. The current implementation evaluates the right-hand side with
+`t = 1.0`, so it should not be used unchanged for explicitly time-dependent
+callbacks.
 
 ```@docs
 MiCRM.Analysis.get_jac
@@ -18,6 +22,7 @@ Once the Jacobian has been calculated, it can be used to derive several stabilit
 
 ```@docs
 MiCRM.Analysis.get_Rins
+MiCRM.Analysis.get_displacement
 MiCRM.Analysis.get_stability
 MiCRM.Analysis.get_reactivity
 MiCRM.Analysis.get_return_rate

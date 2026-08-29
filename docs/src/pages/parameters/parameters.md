@@ -1,30 +1,46 @@
 # Parameters
 
-The `MiCRM.Parameters` sub-module contains functions to automatically generate parameter sets for the MiCRM model. This page will give a general overview of how these functions work and interface with the `Simulation` sub-module.
+The `MiCRM.Parameters` submodule generates parameter sets for the default
+consumer-resource dynamics and for user-defined variants.
 
-## Parameters in MiCRM.jl
+## Parameter representation
 
-Parameters in the MiCRM.jl package are all stored in `NamedTuple` objects. This makes them both easy and efficient to access at the small cost that they cannot be modified once created. The parameter sets are split into two parts. First is the set of basic parameters used in the classic MiCRM model. These are directly accessible by from the parameter object (i.e. `p.u`) and used by the default derivative functions (see REF). Second are the optional parameters stored in the `kw`argument within. This second `kw` `NamedTuple` stores additional parameters that may be needed when users make modification to the dynamic equations. The parameters are listed in table below:
+A parameter set is a `NamedTuple`. Its named fields cannot be replaced, but
+array-valued fields remain mutable. The default derivative expects the
+following fields:
 
-| Parameter | Description | Key |
+| Key | Shape | Description |
 | --- | --- | --- |
-| ``C_i`` | Biomass of consumer ``i`` | - |
-| ``R_{\alpha}`` | Mass of resource ``\alpha`` | - |
-| ``N`` | Number of consumer populations | `N` |
-| ``M`` | Number of resources | `M` |
-| ``u_{i \alpha}`` | Uptake rate of resource ``\alpha`` by consumer ``i`` | `u` |
-| ``m_i`` | Loss term for consumer ``i`` | `m` |
-| ``\rho_{\alpha}`` | Inflow rate for resource ``\alpha`` | `ρ` |
-| ``\omega_{\alpha}`` | Outflow rate for resource ``\alpha`` | `ω` |
-| ``l_{\alpha \beta}`` | Fraction of resource ``\alpha`` uptake leaked as resource ``\beta`` | `l` |
-| ``kw`` | Additional parameters used by custom dynamics | `kw` |
+| `N` | scalar | Number of consumer populations |
+| `M` | scalar | Number of resources |
+| `u` | `N × M` | Consumer uptake rates |
+| `m` | `N` | Consumer loss rates |
+| `ρ` | `M` | Resource inflow rates |
+| `ω` | `M` | Resource outflow rates |
+| `l` | `M × M` | Leakage fractions from rows into columns |
+| `kw` | `NamedTuple` | Additional model or callback parameters |
 
-## Generating Parameter Sets
+The state variables are not stored in this tuple. A simulation state contains
+the `N` consumers first and the `M` resources second; see
+[Simulations](../simulations/simulations.md).
 
-MiCRM.jl comes with a convenience function to generate these parameter dictionaries in the form of the `Parameters.generate_params` function. This function takes a set of functions as arguments that dictate the rules by which the various parameters of the model are defined. It then returns them as a `NamedTuple` to be used in the actual simulations. This makes it relatively simple to generate many randomly generated communities when running high numbers of simulations.
+## Generating parameter sets
+
+The default generators draw random uptake and leakage matrices. Supply `λ`,
+the total leakage fraction assigned to every resource row:
+
+```julia
+parameters = MiCRM.Parameters.generate_params(10, 8; λ=0.3)
+```
 
 ```@docs
 MiCRM.Parameters.generate_params
 ```
 
-See [Structured community generation](community_generation.md) for the included generators. Custom generator functions can be supplied to determine how each parameter set is constructed.
+Custom generators are passed as `f_m`, `f_ρ`, `f_ω`, `f_u`, or `f_l`.
+Each receives `(N, M, kw)`, where `kw` is a dictionary containing the extra
+keywords supplied to `generate_params`. A generator must return the shape
+required by the table above.
+
+See [Structured community generation](community_generation.md) for the included
+modular uptake and leakage generators.

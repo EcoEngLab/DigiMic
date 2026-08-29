@@ -1,16 +1,61 @@
-# Defining System Dynamics
+# Defining custom dynamics
 
-`MiCRM.Simulations.dx!` accepts `growth!`, `supply!`, `depletion!`, and
-`extrinsic!` keyword callbacks. A callback can replace one contribution without
-rewriting the remaining consumer-resource dynamics.
+[`MiCRM.Simulations.dx!`](@ref) accepts `growth!`, `supply!`,
+`depletion!`, and `extrinsic!` keyword callbacks. Replacing one callback
+changes that contribution without requiring a copy of the complete derivative.
 
-## Basic Modifications
+## Callback contracts
 
-Consumer growth callbacks receive `(du, u, p, t, consumer_index)`. Supply
-callbacks receive `(du, u, p, t, resource_index)`, and depletion callbacks also
-receive the consumer index.
+- `growth!(du, u, p, t, i)` updates consumer `i`.
+- `supply!(du, u, p, t, α)` updates resource `α`.
+- `depletion!(du, u, p, t, i, α)` adds consumer `i`'s effect on resource
+  `α`.
+- `extrinsic!(du, u, p, t)` runs after the consumer and resource loops and can
+  update additional state variables.
 
-## Advanced Modifications
+For each consumer, `dx!` resets that consumer's derivative before calling
+`growth!`. For each resource, it resets that resource's derivative before
+calling `supply!` and then `depletion!` for every consumer. By the time
+`extrinsic!` runs, the first `N + M` entries have been assigned. An
+`extrinsic!` callback is responsible for assigning the derivatives of any
+additional states.
 
-An `extrinsic!` callback receives `(du, u, p, t)` and can update additional
-state variables after the consumer and resource derivatives have been computed.
+## Example: additional consumer mortality
+
+The following growth callback first applies the default growth dynamics and
+then adds a constant per-capita mortality rate:
+
+```julia
+using MiCRM
+using OrdinaryDiffEq
+
+parameters = MiCRM.Parameters.generate_params(
+    6,
+    4;
+    λ=0.3,
+    extra_mortality=0.05,
+)
+
+function mortality_growth!(du, u, p, t, i)
+    MiCRM.Simulations.growth_MiCRM!(du, u, p, t, i)
+    du[i] -= p.kw.extra_mortality * u[i]
+end
+
+function mortality_rhs!(du, u, p, t)
+    MiCRM.Simulations.dx!(
+        du,
+        u,
+        p,
+        t;
+        growth! = mortality_growth!,
+    )
+end
+
+problem = ODEProblem(
+    mortality_rhs!,
+    ones(parameters.N + parameters.M),
+    (0.0, 10.0),
+    parameters,
+)
+solution = solve(problem, Tsit5())
+```
