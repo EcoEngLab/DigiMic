@@ -47,7 +47,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
       - name: Preserve coverage report
         if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: julia-coverage
           path: lcov.info
